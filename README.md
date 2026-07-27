@@ -9,7 +9,7 @@
 ## 📦 Установка
 
 ```bash
-go get github.com/paspoid/server-api
+go get github.com/paspoid/server-api@v0.1.0
 ```
 
 ---
