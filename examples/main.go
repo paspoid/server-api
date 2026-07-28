@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	paspoid "github.com/paspoid/server-api"
 )
 
 func main() {
-	_ = godotenv.Load()
+	if err := godotenv.Overload(); err != nil {
+		log.Fatalf("failed to load .env: %v", err)
+	}
 
 	baseUrl := os.Getenv("PASPOID_BASE_URL")
 
@@ -37,12 +40,73 @@ func main() {
 	fmt.Println("key:", getKeyResp.Key)
 	fmt.Println("validation_window:", getKeyResp.ValidationWindow)
 
-	validateResp, err := c.Validate(ctx, getKeyResp.Key)
+	validationWindow, err := time.ParseDuration(getKeyResp.ValidationWindow)
 	if err != nil {
-		log.Fatalf("failed to validate: %v", err)
+		log.Fatalf(
+			"invalid validation_window %q: %v",
+			getKeyResp.ValidationWindow,
+			err,
+		)
+	}
+	if validationWindow <= 0 {
+		log.Fatalf("validation_window must be positive: %s", validationWindow)
 	}
 
-	fmt.Println("status:", validateResp.Status)
+	pollInterval := validationWindow / 10
+	if pollInterval < time.Second {
+		pollInterval = time.Second
+	}
+	if pollInterval > 5*time.Second {
+		pollInterval = 5 * time.Second
+	}
+
+	fmt.Println("poll_interval:", pollInterval)
+
+	pollCtx, cancel := context.WithTimeout(ctx, validationWindow)
+	defer cancel()
+
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-pollCtx.Done():
+			log.Fatalf(
+				"validation window expired after %s",
+				validationWindow,
+			)
+
+		case <-ticker.C:
+			validateResp, err := c.Validate(pollCtx, getKeyResp.Key)
+			if err != nil {
+				log.Printf("validate request failed, retrying: %v", err)
+				continue
+			}
+
+			fmt.Println("status:", validateResp.Status)
+
+			switch validateResp.Status {
+			case "incomplete":
+				continue
+
+			case "success":
+				printValidationResult(validateResp)
+				return
+
+			case "failed":
+				log.Fatal("validation failed")
+
+			default:
+				log.Printf(
+					"unknown validation status %q, retrying",
+					validateResp.Status,
+				)
+			}
+		}
+	}
+}
+
+func printValidationResult(validateResp *paspoid.ValidateResponse) {
 	if validateResp.DataType != nil {
 		fmt.Println("data_type:", *validateResp.DataType)
 	}

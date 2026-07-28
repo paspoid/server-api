@@ -118,6 +118,50 @@ PASPOID_TRANSACTION_TYPE=auth
 
 ---
 
+## 🔄 Схема интеграции
+
+```mermaid
+sequenceDiagram
+    autonumber
+
+    actor Backend as Integrator Backend
+    participant SDK as PASPOID Go SDK
+    participant API as PASPOID API
+    actor User as End User in RingApp
+
+    Note over Backend: Keep API credentials on the backend only
+
+    Backend->>SDK: NewClient(baseURL, apiKey, apiSecret)
+    Backend->>SDK: GetKey(servicePublicID, transactionType)
+    SDK->>API: POST /v1/ext/get-key
+    API-->>SDK: key + validation_window
+    SDK-->>Backend: GetKeyResponse
+
+    Backend-->>User: Start RingApp flow using key
+
+    loop Poll before validation_window expires
+        Backend->>SDK: Validate(key)
+        SDK->>API: POST /v1/ext/validate
+        API-->>SDK: validation status
+
+        alt status = incomplete
+            SDK-->>Backend: Continue polling
+        else status = success
+            SDK-->>Backend: Verified data
+            Note over Backend: Stop polling and process result
+        else status = failed
+            SDK-->>Backend: Validation failed
+            Note over Backend: Stop polling
+        end
+    end
+```
+
+> `validation_window` — это срок жизни одноразового ключа, а не интервал
+> polling. Выполняйте `Validate` с небольшим интервалом и остановите polling
+> при статусе `success`, `failed` или после истечения окна.
+
+---
+
 ## 📐 Архитектура проекта
 
 Библиотека построена с соблюдением принципов **Clean Architecture (Hexagonal Architecture)**:
