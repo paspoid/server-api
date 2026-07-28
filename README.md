@@ -1,12 +1,14 @@
 # Paspoid Server API Go SDK
 
-Официальный Go SDK для интеграции с **Paspoid Server API** (Transaction & Authentication Service). 
+The official Go SDK for integrating with the **Paspoid Server API**
+(Transaction and Authentication Service).
 
-Библиотека предоставляет удобный интерфейс для получения ключей транзакций и последующей валидации сессий/транзакций.
+The SDK provides a convenient interface for obtaining transaction keys and
+validating authentication sessions and transactions.
 
 ---
 
-## 📦 Установка
+## 📦 Installation
 
 ```bash
 go get github.com/paspoid/server-api@v0.1.0
@@ -14,7 +16,7 @@ go get github.com/paspoid/server-api@v0.1.0
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
 ```go
 package main
@@ -28,28 +30,32 @@ import (
 )
 
 func main() {
-	// Инициализация клиента
+	// Initialize the client. Keep these credentials on the backend only.
 	client := paspoid.NewClient(
-		"https://api.paspoid.com", // Base URL
-		"YOUR_API_KEY",           // API Key
-		"YOUR_API_SECRET",        // API Secret
+		"https://paspo.id", // Base URL
+		"YOUR_API_KEY",     // API Key
+		"YOUR_API_SECRET",  // API Secret
 	)
 
 	ctx := context.Background()
 
-	// 1. Получение транзакционного ключа
-	keyResp, err := client.GetKey(ctx, "YOUR_SERVICE_PUBLIC_ID", "auth")
+	// 1. Obtain a one-time transaction key.
+	keyResp, err := client.GetKey(
+		ctx,
+		"YOUR_SERVICE_PUBLIC_ID",
+		"phones",
+	)
 	if err != nil {
-		log.Fatalf("Ошибка получения ключа: %v", err)
+		log.Fatalf("failed to get key: %v", err)
 	}
 
 	fmt.Println("Transaction Key:", keyResp.Key)
 	fmt.Println("Validation Window:", keyResp.ValidationWindow)
 
-	// 2. Валидация транзакции по ключу / nonce
+	// 2. Check the transaction status using the returned key.
 	valResp, err := client.Validate(ctx, keyResp.Key)
 	if err != nil {
-		log.Fatalf("Ошибка валидации: %v", err)
+		log.Fatalf("failed to validate transaction: %v", err)
 	}
 
 	fmt.Println("Status:", valResp.Status)
@@ -62,63 +68,83 @@ func main() {
 }
 ```
 
+If `Validate` returns `incomplete`, continue polling at a short interval until
+the status becomes `success` or `failed`, or until the validation window
+expires.
+
 ---
 
-## 🛠 Методы API
+## 🛠 API Methods
 
 ### `GetKey(ctx context.Context, servicePublicId, transactionType string) (*GetKeyResponse, error)`
 
-Запрашивает временный транзакционный ключ и окно валидации для выполнения проверки.
+Requests a temporary transaction key and its validation window.
 
-- **Параметры:**
-  - `ctx` — контекст исполнения `context.Context`.
-  - `servicePublicId` — публичный ID сервиса.
-  - `transactionType` — тип транзакции (например, `"auth"`).
-- **Возвращает:** `*GetKeyResponse` или ошибку `error`.
+**Parameters:**
 
-#### Структура `GetKeyResponse`:
-| Поле | Тип | Описание |
+- `ctx` — request context.
+- `servicePublicId` — public identifier of the configured service.
+- `transactionType` — requested transaction type. Supported values:
+  - `phones`
+  - `emails`
+  - `national_id`
+  - `pasport_id`
+  - `transaction_verify`
+  - `second_factor`
+
+**Returns:** `*GetKeyResponse` or an `error`.
+
+#### `GetKeyResponse`
+
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| `Key` | `string` | Временный ключ транзакции. |
-| `ValidationWindow` | `string` | Временное окно, в течение которого ключ действителен. |
+| `Key` | `string` | Temporary one-time transaction key (nonce). |
+| `ValidationWindow` | `string` | Duration for which the key remains valid, such as `30s`. |
 
 ---
 
 ### `Validate(ctx context.Context, nonce string) (*ValidateResponse, error)`
 
-Проверяет статус транзакции по `nonce` / ключу и возвращает подробные данные авторизации и устройства.
+Checks the transaction status using the one-time key and returns verified
+authentication and device data when available.
 
-- **Параметры:**
-  - `ctx` — контекст исполнения `context.Context`.
-  - `nonce` — одноразовый ключ транзакции (`Key`).
-- **Возвращает:** `*ValidateResponse` или ошибку `error`.
+**Parameters:**
 
-#### Структура `ValidateResponse`:
-| Поле | Тип | Описание |
+- `ctx` — request context.
+- `nonce` — one-time transaction key returned by `GetKey`.
+
+**Returns:** `*ValidateResponse` or an `error`.
+
+#### `ValidateResponse`
+
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| `Status` | `string` | Статус проверки (например, `"success"`, `"failed"`). |
-| `DataType` | `*string` | Тип переданных данных (опционально). |
-| `DataValue` | `*string` | Значение переданных данных (опционально). |
-| `PhoneData` | `json.RawMessage` | Расширенные данные по номеру телефона (JSON). |
-| `DeviceData` | `json.RawMessage` | Данные устройства пользователя (JSON). |
+| `Status` | `string` | Validation status: `incomplete`, `success`, or `failed`. |
+| `DataType` | `*string` | Type of verified data, when available. |
+| `DataValue` | `*string` | Verified value, when available. |
+| `PhoneData` | `json.RawMessage` | Extended phone and SIM information as JSON. |
+| `DeviceData` | `json.RawMessage` | User device information as JSON. |
 
 ---
 
-## ⚙️ Переменные окружения (`.env`)
+## ⚙️ Environment Variables
 
-Для локальной разработки или запуска примера в папке `examples/` можно использовать `.env` файл:
+For local development or for running the application in `examples/`, create a
+`.env` file:
 
 ```env
-PASPOID_BASE_URL=http://localhost:8080
+PASPOID_BASE_URL=https://paspo.id
 PASPOID_API_KEY=your_api_key_here
 PASPOID_API_SECRET=your_api_secret_here
 PASPOID_SERVICE_PUBLIC_ID=your_service_public_id
-PASPOID_TRANSACTION_TYPE=auth
+PASPOID_TRANSACTION_TYPE=phones
 ```
+
+Never expose the API key or API secret to browser or mobile applications.
 
 ---
 
-## 🔄 Схема интеграции
+## 🔄 Integration Flow
 
 ```mermaid
 sequenceDiagram
@@ -137,47 +163,47 @@ sequenceDiagram
     API-->>SDK: key + validation_window
     SDK-->>Backend: GetKeyResponse
 
-    Backend-->>User: Start RingApp flow using key
+    Backend-->>User: Start the RingApp flow using the key
 
     loop Poll before validation_window expires
         Backend->>SDK: Validate(key)
         SDK->>API: POST /v1/ext/validate
-        API-->>SDK: validation status
+        API-->>SDK: Validation status
 
         alt status = incomplete
             SDK-->>Backend: Continue polling
         else status = success
-            SDK-->>Backend: Verified data
-            Note over Backend: Stop polling and process result
+            SDK-->>Backend: Return verified data
+            Note over Backend: Stop polling and process the result
         else status = failed
-            SDK-->>Backend: Validation failed
+            SDK-->>Backend: Return validation failure
             Note over Backend: Stop polling
         end
     end
 ```
 
-> `validation_window` — это срок жизни одноразового ключа, а не интервал
-> polling. Выполняйте `Validate` с небольшим интервалом и остановите polling
-> при статусе `success`, `failed` или после истечения окна.
+> `validation_window` is the lifetime of the one-time key, not the polling
+> interval. Call `Validate` at a short interval and stop polling when the status
+> becomes `success` or `failed`, or when the window expires.
 
 ---
 
-## 📐 Архитектура проекта
+## 📐 Project Architecture
 
-Библиотека построена с соблюдением принципов **Clean Architecture (Hexagonal Architecture)**:
+The SDK follows **Clean Architecture (Hexagonal Architecture)** principles:
 
 ```text
 server-api/
-├── client.go                     # Публичная точка входа SDK (Client)
-├── responses.go                  # Публичные DTO ответов (GetKeyResponse, ValidateResponse)
-├── examples/                     # Примеры использования SDK
-└── internal/                     # Внутренняя логика (скрыта от внешних вызовов)
-    ├── application/              # Use Cases, DTO, Ports (Интерфейсы)
-    └── infrastructure/           # Реализации адаптеров (REST HTTP-клиент)
+├── client.go                     # Public SDK entry point
+├── responses.go                  # Public response DTOs
+├── examples/                     # SDK usage examples
+└── internal/                     # Internal implementation
+    ├── application/              # Use cases, DTOs, and ports
+    └── infrastructure/           # REST transport adapter
 ```
 
 ---
 
-## 📄 Лицензия
+## 📄 License
 
-MIT License
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
