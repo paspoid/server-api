@@ -1,6 +1,6 @@
-# Paspoid Server API Go SDK
+# paspo.id Server API Go SDK
 
-The official Go SDK for integrating with the **Paspoid Server API**
+The official Go SDK for integrating with the **paspo.id Server API**
 (Transaction and Authentication Service).
 
 The SDK provides a convenient interface for obtaining transaction keys and
@@ -147,8 +147,8 @@ sequenceDiagram
     autonumber
 
     actor Backend as Integrator Backend
-    participant SDK as PASPOID Go SDK
-    participant API as PASPOID API
+    participant SDK as paspo.id Go SDK
+    participant API as paspo.id API
 
     Note over Backend: Keep API credentials on the backend only
 
