@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/paspoid/server-api/internal/application/ports/providers"
-	"github.com/paspoid/server-api/internal/application/ports/providers/requests"
-	"github.com/paspoid/server-api/internal/application/ports/providers/responses"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers/requests"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers/responses"
 )
 
 type transactionServiceRestProvider struct {

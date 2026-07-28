@@ -3,9 +3,9 @@ package paspoid
 import (
 	"context"
 
-	"github.com/paspoid/server-api/internal/application/dto"
-	"github.com/paspoid/server-api/internal/application/use_cases"
-	restProviders "github.com/paspoid/server-api/internal/infrastructure/adapters/providers/rest"
+	"github.com/paspoid/server-api-go/internal/application/dto"
+	"github.com/paspoid/server-api-go/internal/application/use_cases"
+	restProviders "github.com/paspoid/server-api-go/internal/infrastructure/adapters/providers/rest"
 )
 
 type Client struct {

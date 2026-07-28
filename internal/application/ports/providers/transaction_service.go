@@ -3,8 +3,8 @@ package providers
 import (
 	"context"
 
-	"github.com/paspoid/server-api/internal/application/ports/providers/requests"
-	"github.com/paspoid/server-api/internal/application/ports/providers/responses"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers/requests"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers/responses"
 )
 
 type TransactionServiceProvider interface {

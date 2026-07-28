@@ -11,7 +11,7 @@ validating authentication sessions and transactions.
 ## 📦 Installation
 
 ```bash
-go get github.com/paspoid/server-api@v0.1.0
+go get github.com/paspoid/server-api-go@v0.1.0
 ```
 
 ---
@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"log"
 
-	paspoid "github.com/paspoid/server-api"
+	paspoid "github.com/paspoid/server-api-go"
 )
 
 func main() {

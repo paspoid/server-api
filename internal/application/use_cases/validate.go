@@ -3,9 +3,9 @@ package use_cases
 import (
 	"context"
 
-	"github.com/paspoid/server-api/internal/application/dto"
-	"github.com/paspoid/server-api/internal/application/ports/providers"
-	"github.com/paspoid/server-api/internal/application/ports/providers/requests"
+	"github.com/paspoid/server-api-go/internal/application/dto"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers"
+	"github.com/paspoid/server-api-go/internal/application/ports/providers/requests"
 )
 
 type ValidateUseCase struct {

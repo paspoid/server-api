@@ -1,4 +1,4 @@
-module github.com/paspoid/server-api
+module github.com/paspoid/server-api-go
 
 go 1.24.0
 

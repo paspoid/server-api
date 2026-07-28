@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	paspoid "github.com/paspoid/server-api"
+	paspoid "github.com/paspoid/server-api-go"
 )
 
 func main() {
