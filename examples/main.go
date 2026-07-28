@@ -19,7 +19,7 @@ func main() {
 	apiSecret := os.Getenv("PASPOID_API_SECRET")
 	servicePublicId := os.Getenv("PASPOID_SERVICE_PUBLIC_ID")
 
-	transactionType := "auth"
+	transactionType := os.Getenv("PASPOID_TRANSACTION_TYPE")
 
 	c := paspoid.NewClient(
 		baseUrl,
